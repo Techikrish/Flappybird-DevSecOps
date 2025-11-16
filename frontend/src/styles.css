@@ -1,0 +1,36 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #282c34;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+}
+
+.game-container {
+  padding: 20px;
+}
+
+.player-form input {
+  padding: 10px;
+  margin: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  background: #61dafb;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+canvas {
+  background: #70c5ce;
+  border-radius: 10px;
+}
+
+.overlay {
+  margin-top: 20px;
+}
