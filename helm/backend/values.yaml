@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: YOUR_DOCKERHUB_USERNAME/flappy-backend
+  tag: "latest"
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 5000
+
+env:
+  dbSecretName: "flappy-db-secret"
+  dbSecretKey: "DATABASE_URL"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "backend.flappy.local"
