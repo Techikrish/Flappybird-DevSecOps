@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import create_engine
@@ -7,20 +8,37 @@ from models import Base, Score
 app = Flask(__name__)
 CORS(app)
 
-DATABASE_URL = "sqlite:///scores.db"
+# -------------------------------------------------------------------
+# Database config from environment variables (Helm will provide them)
+# -------------------------------------------------------------------
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
 
-# SQLAlchemy engine + session
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+if not DB_HOST or not DB_NAME or not DB_USER or not DB_PASS:
+    raise RuntimeError("❌ Missing one or more DB environment variables")
+
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
+
+# -------------------------------------------------------------------
+# SQLAlchemy engine and session
+# -------------------------------------------------------------------
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
-# Create tables ONCE at startup (safe)
+# -------------------------------------------------------------------
+# Create DB tables only once at startup
+# -------------------------------------------------------------------
 try:
     Base.metadata.create_all(bind=engine)
-    print("✔ Tables created")
+    print("✔ PostgreSQL tables created")
 except Exception as e:
     print("⚠ Failed to create tables:", e)
 
-
+# -------------------------------------------------------------------
+# Routes
+# -------------------------------------------------------------------
 @app.post("/score")
 def submit_score():
     data = request.get_json()
@@ -47,26 +65,28 @@ def submit_score():
 def leaderboard():
     session = SessionLocal()
     try:
-        scores = session.query(Score).order_by(Score.score.desc()).limit(10).all()
+        scores = (
+            session.query(Score)
+            .order_by(Score.score.desc())
+            .limit(10)
+            .all()
+        )
 
-        # Convert SQLAlchemy objects → JSON dictionary
         leaderboard_data = [
             {
                 "player_name": s.username,
                 "score": s.score
-            }
-            for s in scores
+            } for s in scores
         ]
 
         return jsonify(leaderboard_data)
-
     finally:
         session.close()
 
 
 @app.get("/")
 def home():
-    return "Backend running"
+    return "Backend running (PostgreSQL mode)"
 
 
 if __name__ == "__main__":
