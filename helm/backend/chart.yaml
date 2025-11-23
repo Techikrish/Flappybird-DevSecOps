@@ -1,6 +1,0 @@
-apiVersion: v2
-name: flappy-backend
-description: Backend service for Flappy Bird game
-type: application
-version: 1.0.0
-appVersion: "1.0"
