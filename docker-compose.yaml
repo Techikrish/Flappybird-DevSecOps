@@ -1,38 +1,49 @@
+version: "3.8"
 services:
   db:
-    image: postgres:15
+    image: postgres:14
     environment:
-      POSTGRES_USER: flappy
-      POSTGRES_PASSWORD: flappy_pass
-      POSTGRES_DB: flappydb
-    volumes:
-      - db-data:/var/lib/postgresql/data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=flappydb
     ports:
       - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U flappy -d flappydb"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
   backend:
     build: ./backend
-    env_file:
-      - .env.example
+    environment:
+      - DB_HOST=db
+      - DB_NAME=flappydb
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_PORT=5432
+      - FLASK_ENV=development
+    ports:
+      - "5000:5000"
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "5000:5000"
-    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+    command: python app.py
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE=http://localhost:5000
     ports:
       - "3000:80"
     depends_on:
       - backend
-    restart: unless-stopped
 
 volumes:
-  db-data:
+  db_data:

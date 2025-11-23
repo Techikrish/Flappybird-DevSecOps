@@ -1,0 +1,284 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body,
+html,
+#root {
+  width: 100%;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: #000;
+}
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* UI Panel */
+.ui-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  pointer-events: none;
+}
+
+.top-left,
+.top-right {
+  pointer-events: auto;
+}
+
+.top-left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.top-right {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-width: 280px;
+}
+
+.top-right h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.leaderboard-list {
+  max-height: 180px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+}
+
+.leaderboard-item:last-child {
+  border-bottom: none;
+}
+
+.rank {
+  color: #999;
+  min-width: 30px;
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.points {
+  color: #2e8b57;
+  font-weight: bold;
+  min-width: 40px;
+  text-align: right;
+}
+
+.no-scores {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  padding: 10px 0;
+}
+
+/* Input Field */
+.input-field {
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 180px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.input-field:focus {
+  border-color: #2e8b57;
+}
+
+.input-field:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #2e8b57;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.btn:hover:not(:disabled) {
+  background: #1f6b3f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: #dc3545;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.player-display {
+  color: #333;
+  font-weight: bold;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #2e8b57;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.btn-small:hover {
+  background: #1f6b3f;
+}
+
+.btn-large {
+  padding: 12px 24px;
+  font-size: 18px;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h1 {
+  font-size: 32px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-content h2 {
+  font-size: 28px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-content p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.final-score {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2e8b57;
+  margin-bottom: 25px;
+}
+
+.modal-content .input-field {
+  width: 100%;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.modal-content .btn {
+  width: 100%;
+  margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+  .top-left {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .input-field {
+    width: 150px;
+  }
+
+  .top-right {
+    max-width: 200px;
+  }
+
+  .modal-content {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+}

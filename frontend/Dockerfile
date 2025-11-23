@@ -1,14 +1,13 @@
-# build stage
-FROM node:18-alpine as build
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
+ARG VITE_API_BASE=http://localhost:5000
+ENV VITE_API_BASE=$VITE_API_BASE
 RUN npm run build
 
-# production stage - nginx
 FROM nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-# remove default nginx config to allow client-side routing (not critical here)
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

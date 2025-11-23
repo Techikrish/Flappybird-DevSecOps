@@ -1,12 +1,20 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
-from sqlalchemy.orm import declarative_base
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
-Base = declarative_base()
+db = SQLAlchemy()
 
-class Score(Base):
-    __tablename__ = "scores"
+class Leaderboard(db.Model):
+    __tablename__ = "leaderboard"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(64), nullable=False)
-    score = Column(Integer, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    player_name = db.Column(db.String(100), nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "player_name": self.player_name,
+            "score": self.score,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }
