@@ -1,8 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 
-// Get API URL - when in Docker, use backend service, otherwise localhost
-const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const API_URL = (() => {
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE;
+  }
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    return `${window.location.origin}/api`;
+  }
+  return "http://localhost:5000";
+})();
 
 console.log("[App] API_URL:", API_URL);
 
