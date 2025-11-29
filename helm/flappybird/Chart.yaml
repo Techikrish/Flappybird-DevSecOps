@@ -1,0 +1,7 @@
+apiVersion: v2
+name: flappybird
+description: Helm chart for the FlappyBird microservices stack
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
