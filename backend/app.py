@@ -11,7 +11,9 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# -----------------------------
 # Prometheus metrics
+# -----------------------------
 http_requests_total = Counter(
     'http_requests_total',
     'Total HTTP requests',
@@ -35,24 +37,40 @@ scores_submitted_total = Counter(
     ['player_name']
 )
 
-# Add metrics endpoint
+# Metrics endpoint
 app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
     '/metrics': make_wsgi_app()
 })
 
+# -----------------------------
+# Database Configuration
+# -----------------------------
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_NAME = os.getenv("DB_NAME", "flappydb")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASS = os.getenv("DB_PASS", "postgres")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
-print(f"[DEBUG] Connecting to database: postgresql://{DB_USER}:***@{DB_HOST}:{DB_PORT}/{DB_NAME}", file=sys.stderr)
+# ❗ Ensure DB_HOST does NOT include a port accidentally
+if ":" in DB_HOST:
+    print("[ERROR] Your DB_HOST contains a port! It must ONLY be the hostname.", file=sys.stderr)
+    print(f"[ERROR] DB_HOST provided = {DB_HOST}", file=sys.stderr)
+    # Extract hostname before first ':'
+    DB_HOST = DB_HOST.split(":")[0]
+    print(f"[FIX] Using sanitized DB_HOST = {DB_HOST}", file=sys.stderr)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+print(f"[DEBUG] Final DATABASE_URL = {DATABASE_URL.replace(DB_PASS, '***')}", file=sys.stderr)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# -----------------------------
+# Database Model
+# -----------------------------
 class Score(db.Model):
     __tablename__ = "scores"
     id = db.Column(db.Integer, primary_key=True)
@@ -68,6 +86,9 @@ class Score(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
+# -----------------------------
+# Middleware
+# -----------------------------
 @app.before_request
 def before_request():
     request.start_time = time.time()
@@ -86,6 +107,9 @@ def after_request(response):
     ).inc()
     return response
 
+# -----------------------------
+# Endpoints
+# -----------------------------
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"}), 200
@@ -122,44 +146,40 @@ def leaderboard():
     try:
         limit = int(request.args.get("limit", 10))
         rows = Score.query.order_by(Score.score.desc(), Score.created_at.asc()).limit(limit).all()
-        print(f"[DEBUG] Leaderboard query returned {len(rows)} rows", file=sys.stderr)
-        result = [r.to_dict() for r in rows]
-        print(f"[DEBUG] Leaderboard result: {result}", file=sys.stderr)
-        return jsonify(result), 200
+        print(f"[DEBUG] Leaderboard returned {len(rows)} rows", file=sys.stderr)
+        return jsonify([r.to_dict() for r in rows]), 200
     except Exception as e:
         print(f"[ERROR] Leaderboard error: {str(e)}", file=sys.stderr)
         return jsonify({"error": str(e)}), 500
 
 @app.route("/seed", methods=["POST"])
 def seed_data():
-    """Seed some test data for debugging"""
+    """Manually seed the DB for debugging"""
     try:
-        # Clear existing data
         Score.query.delete()
         db.session.commit()
-        
-        # Add test data
+
         test_scores = [
             Score(player_name="Alice", score=150),
             Score(player_name="Bob", score=120),
             Score(player_name="Charlie", score=100),
         ]
-        for s in test_scores:
-            db.session.add(s)
+        db.session.add_all(test_scores)
         db.session.commit()
-        
-        print("[DEBUG] Test data seeded", file=sys.stderr)
+
+        print("[DEBUG] Seed data inserted", file=sys.stderr)
         return jsonify({"message": "seeded", "count": len(test_scores)}), 201
     except Exception as e:
         db.session.rollback()
         print(f"[ERROR] Seed error: {str(e)}", file=sys.stderr)
         return jsonify({"error": str(e)}), 500
 
+# -----------------------------
+# App Start
+# -----------------------------
 if __name__ == "__main__":
     print("[DEBUG] Starting Flask app", file=sys.stderr)
     with app.app_context():
-        print("[DEBUG] Creating database tables", file=sys.stderr)
+        print("[DEBUG] Creating tables if not exist", file=sys.stderr)
         db.create_all()
-        print("[DEBUG] Database tables created", file=sys.stderr)
-    print("[DEBUG] Running Flask server", file=sys.stderr)
     app.run(host="0.0.0.0", port=5000, debug=True)
