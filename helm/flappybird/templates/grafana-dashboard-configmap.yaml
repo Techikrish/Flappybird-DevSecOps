@@ -1,0 +1,111 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.grafana.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "flappybird.fullname" . }}-grafana-dashboard-config
+  namespace: {{ include "flappybird.namespace" . }}
+  labels:
+    {{- include "flappybird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+data:
+  flappybird-dashboard.json: |
+    {
+      "title": "FlappyBird Monitoring",
+      "tags": ["flappybird"],
+      "timezone": "browser",
+      "schemaVersion": 16,
+      "version": 1,
+      "refresh": "10s",
+      "panels": [
+        {
+          "id": 1,
+          "title": "HTTP Requests Rate",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "rate(http_requests_total[5m])",
+              "legendFormat": "{{method}} {{endpoint}}"
+            }
+          ],
+          "yaxes": [
+            {"format": "reqps", "label": "Requests/sec"},
+            {"format": "short"}
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Response Time",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+              "legendFormat": "p95"
+            },
+            {
+              "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+              "legendFormat": "p50"
+            }
+          ],
+          "yaxes": [
+            {"format": "s", "label": "Response Time"},
+            {"format": "short"}
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Scores Submitted",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "rate(scores_submitted_total[5m])",
+              "legendFormat": "{{player_name}}"
+            }
+          ],
+          "yaxes": [
+            {"format": "short", "label": "Scores/sec"},
+            {"format": "short"}
+          ]
+        },
+        {
+          "id": 4,
+          "title": "CPU Usage",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "rate(container_cpu_usage_seconds_total[5m])",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "yaxes": [
+            {"format": "percent", "label": "CPU"},
+            {"format": "short"}
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Memory Usage",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "container_memory_usage_bytes",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "yaxes": [
+            {"format": "bytes", "label": "Memory"},
+            {"format": "short"}
+          ]
+        }
+      ],
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      }
+    }
+{{- end }}
+

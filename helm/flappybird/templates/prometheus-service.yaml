@@ -1,0 +1,21 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.prometheus.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "flappybird.fullname" . }}-prometheus
+  namespace: {{ include "flappybird.namespace" . }}
+  labels:
+    {{- include "flappybird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+spec:
+  type: {{ .Values.monitoring.prometheus.service.type }}
+  selector:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: prometheus
+  ports:
+    - name: http
+      port: {{ .Values.monitoring.prometheus.service.port }}
+      targetPort: 9090
+      protocol: TCP
+{{- end }}
+

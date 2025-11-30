@@ -5,7 +5,7 @@ global:
 backend:
   replicaCount: 2
   image:
-    repository: docker.io/USERNAME/flappybird-backend
+    repository: docker.io/techikrish/flappybird-backend
     tag: latest
     pullPolicy: IfNotPresent
   service:
@@ -30,7 +30,7 @@ backend:
 frontend:
   replicaCount: 2
   image:
-    repository: docker.io/USERNAME/flappybird-frontend
+    repository: docker.io/techikrish/flappybird-frontend
     tag: latest
     pullPolicy: IfNotPresent
   service:
@@ -51,4 +51,46 @@ frontend:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    image:
+      repository: prom/prometheus
+      tag: v2.48.0
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 9090
+    retention: "15d"
+    scrapeInterval: "30s"
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+  grafana:
+    enabled: true
+    image:
+      repository: grafana/grafana
+      tag: 10.2.0
+      pullPolicy: IfNotPresent
+    service:
+      type: LoadBalancer
+      port: 3000
+    adminUser: admin
+    adminPassword: admin  # Change this in production!
+    persistence:
+      enabled: false
+      size: 10Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "250m"
 

@@ -1,0 +1,21 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.grafana.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "flappybird.fullname" . }}-grafana-datasources
+  namespace: {{ include "flappybird.namespace" . }}
+  labels:
+    {{- include "flappybird.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://{{ include "flappybird.fullname" . }}-prometheus:{{ .Values.monitoring.prometheus.service.port }}
+        isDefault: true
+        editable: true
+{{- end }}
+

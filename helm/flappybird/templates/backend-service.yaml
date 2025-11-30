@@ -6,6 +6,12 @@ metadata:
   labels:
     {{- include "flappybird.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
+  {{- if .Values.monitoring.enabled }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "5000"
+    prometheus.io/path: "/metrics"
+  {{- end }}
 spec:
   type: {{ .Values.backend.service.type }}
   selector:
