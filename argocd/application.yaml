@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/USERNAME/FlappyBird-Devsecops.git
+    repoURL: https://github.com/Techikrish/Flappybird-DevSecOps
     targetRevision: main
     path: helm/flappybird
     helm:
