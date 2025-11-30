@@ -25,7 +25,7 @@ data:
           "targets": [
             {
               "expr": "rate(http_requests_total[5m])",
-              "legendFormat": "{{method}} {{endpoint}}"
+              "legendFormat": "{{ "{{" }}method{{ "}}" }} {{ "{{" }}endpoint{{ "}}" }}"
             }
           ],
           "yaxes": [
@@ -61,7 +61,7 @@ data:
           "targets": [
             {
               "expr": "rate(scores_submitted_total[5m])",
-              "legendFormat": "{{player_name}}"
+              "legendFormat": "{{ "{{" }}player_name{{ "}}" }}"
             }
           ],
           "yaxes": [
@@ -77,7 +77,7 @@ data:
           "targets": [
             {
               "expr": "rate(container_cpu_usage_seconds_total[5m])",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "yaxes": [
@@ -93,7 +93,7 @@ data:
           "targets": [
             {
               "expr": "container_memory_usage_bytes",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "yaxes": [
@@ -108,4 +108,3 @@ data:
       }
     }
 {{- end }}
-
