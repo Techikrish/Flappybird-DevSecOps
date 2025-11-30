@@ -1,12 +1,11 @@
 global:
   namespace: flappybird
   imagePullSecrets: []
-
 backend:
   replicaCount: 2
   image:
     repository: docker.io/techikrish/flappybird-backend
-    tag: latest
+    tag: 49f5efd22cb5f533feab287b4847530b2e393e54
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -26,12 +25,11 @@ backend:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-
 frontend:
   replicaCount: 2
   image:
     repository: docker.io/techikrish/flappybird-frontend
-    tag: latest
+    tag: 49f5efd22cb5f533feab287b4847530b2e393e54
     pullPolicy: IfNotPresent
   service:
     type: LoadBalancer
@@ -51,7 +49,6 @@ frontend:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-
 monitoring:
   enabled: true
   prometheus:
@@ -82,7 +79,7 @@ monitoring:
       type: LoadBalancer
       port: 3000
     adminUser: admin
-    adminPassword: admin  # Change this in production!
+    adminPassword: admin # Change this in production!
     persistence:
       enabled: false
       size: 10Gi
@@ -93,4 +90,3 @@ monitoring:
       limits:
         memory: "512Mi"
         cpu: "250m"
-
