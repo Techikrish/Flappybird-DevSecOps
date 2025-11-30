@@ -5,7 +5,7 @@ backend:
   replicaCount: 2
   image:
     repository: docker.io/techikrish/flappybird-backend
-    tag: 49f5efd22cb5f533feab287b4847530b2e393e54
+    tag: 4b969e156a495408f0e6f5d130a261649bc8ccd7
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -29,7 +29,7 @@ frontend:
   replicaCount: 2
   image:
     repository: docker.io/techikrish/flappybird-frontend
-    tag: 49f5efd22cb5f533feab287b4847530b2e393e54
+    tag: 4b969e156a495408f0e6f5d130a261649bc8ccd7
     pullPolicy: IfNotPresent
   service:
     type: LoadBalancer
