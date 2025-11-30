@@ -2,11 +2,43 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
+from prometheus_client import make_wsgi_app, Counter, Histogram, Gauge
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 import os
 import sys
+import time
 
 app = Flask(__name__)
 CORS(app)
+
+# Prometheus metrics
+http_requests_total = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+
+http_request_duration_seconds = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request duration in seconds',
+    ['method', 'endpoint']
+)
+
+active_connections = Gauge(
+    'active_connections',
+    'Number of active connections'
+)
+
+scores_submitted_total = Counter(
+    'scores_submitted_total',
+    'Total scores submitted',
+    ['player_name']
+)
+
+# Add metrics endpoint
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/metrics': make_wsgi_app()
+})
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_NAME = os.getenv("DB_NAME", "flappydb")
@@ -36,6 +68,24 @@ class Score(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    duration = time.time() - request.start_time
+    http_request_duration_seconds.labels(
+        method=request.method,
+        endpoint=request.endpoint or 'unknown'
+    ).observe(duration)
+    http_requests_total.labels(
+        method=request.method,
+        endpoint=request.endpoint or 'unknown',
+        status=response.status_code
+    ).inc()
+    return response
+
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"}), 200
@@ -59,6 +109,7 @@ def submit_score():
         s = Score(player_name=name, score=int(score))
         db.session.add(s)
         db.session.commit()
+        scores_submitted_total.labels(player_name=name).inc()
         print(f"[DEBUG] Score saved: {name} = {score}", file=sys.stderr)
         return jsonify({"message": "saved", "score": s.to_dict()}), 201
     except Exception as e:
