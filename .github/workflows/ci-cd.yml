@@ -51,10 +51,14 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          projectBaseDir: .
           args: >
+            -Dsonar.projectKey=techikrish_flappydevsecops
+            -Dsonar.organization=techikrish
             -Dsonar.sources=backend,frontend
             -Dsonar.exclusions=frontend/dist/**,**/node_modules/**
+            -Dsonar.javascript.file.suffixes=.js,.jsx
+            -Dsonar.sourceEncoding=UTF-8
+
 
       - name: Build backend image
         run: docker build -t backend-scan ./backend
