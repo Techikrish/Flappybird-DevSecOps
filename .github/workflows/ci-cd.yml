@@ -1,0 +1,169 @@
+name: flappybird-ci-cd
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  REGISTRY: docker.io
+  DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_USERNAME }}
+  BACKEND_IMAGE: flappybird-backend
+  FRONTEND_IMAGE: flappybird-frontend
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  test-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend deps
+        working-directory: backend
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Backend unit tests
+        working-directory: backend
+        run: python -m compileall .
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
+
+      - name: Build backend image
+        run: docker build -t backend-scan ./backend
+
+      - name: Build frontend image
+        run: docker build --build-arg VITE_API_BASE=http://localhost:5000 -t frontend-scan ./frontend
+
+      - name: Trivy scan backend image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: backend-scan
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Trivy scan frontend image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: frontend-scan
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Serve frontend for OWASP ZAP
+        run: |
+          npm install -g serve
+          serve -s frontend/dist -l 4173 &
+          echo $! > frontend.pid
+
+      - name: OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: http://localhost:4173
+        continue-on-error: true
+
+      - name: Stop frontend server
+        if: always()
+        run: |
+          if [ -f frontend.pid ]; then
+            kill $(cat frontend.pid) || true
+          fi
+
+  build-and-push:
+    needs: test-and-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build backend image
+        run: >
+          docker build
+          -t $REGISTRY/$DOCKERHUB_NAMESPACE/$BACKEND_IMAGE:$IMAGE_TAG
+          ./backend
+
+      - name: Build frontend image
+        run: >
+          docker build
+          --build-arg VITE_API_BASE=/api
+          -t $REGISTRY/$DOCKERHUB_NAMESPACE/$FRONTEND_IMAGE:$IMAGE_TAG
+          ./frontend
+
+      - name: Push backend image
+        run: docker push $REGISTRY/$DOCKERHUB_NAMESPACE/$BACKEND_IMAGE:$IMAGE_TAG
+
+      - name: Push frontend image
+        run: docker push $REGISTRY/$DOCKERHUB_NAMESPACE/$FRONTEND_IMAGE:$IMAGE_TAG
+
+  bump-helm:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo curl -L "https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64" -o /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Update Helm image tags
+        env:
+          NEW_TAG: ${{ env.IMAGE_TAG }}
+          DOCKER_NS: ${{ env.DOCKERHUB_NAMESPACE }}
+        run: |
+          yq -i '.backend.image.repository = env(REGISTRY) + "/" + env(DOCKERHUB_NAMESPACE) + "/flappybird-backend"' helm/flappybird/values.yaml
+          yq -i '.frontend.image.repository = env(REGISTRY) + "/" + env(DOCKERHUB_NAMESPACE) + "/flappybird-frontend"' helm/flappybird/values.yaml
+          yq -i '.backend.image.tag = env(NEW_TAG)' helm/flappybird/values.yaml
+          yq -i '.frontend.image.tag = env(NEW_TAG)' helm/flappybird/values.yaml
+
+      - name: Commit and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add helm/flappybird/values.yaml
+          git commit -m "chore: bump Helm images to ${IMAGE_TAG}" || echo "No changes to commit"
+          git push origin HEAD:${GITHUB_REF} || echo "No changes pushed"
+
