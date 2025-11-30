@@ -28,7 +28,7 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Set up Python
