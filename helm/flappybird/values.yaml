@@ -11,7 +11,7 @@ backend:
     type: ClusterIP
     port: 5000
   env:
-    dbHost: "flappybird-postgres.cghms6gkid1n.us-east-1.rds.amazonaws.com:5432" # Will be set to RDS endpoint from Terraform
+    dbHost: "add your rds endpoint" # Will be set to RDS endpoint from Terraform
     dbPort: "5432"
     dbName: "flappydb"
     dbUser: "flappy" # Or "postgres" - match your Terraform var.db_username
