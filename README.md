@@ -272,10 +272,10 @@ Once deployed, get the LoadBalancer URL:
 
 `kubectl get svc -n flappy`
 
-![Screenshot from 2025-11-30 14-49-00.png](FlappyBird%20%E2%80%94%20DevSecOps%20&%20GitOps%20Project/Screenshot_from_2025-11-30_14-49-00.png)
+![sc1.png](sc1.png)
 
-![Screenshot from 2025-11-30 17-53-10.png](FlappyBird%20%E2%80%94%20DevSecOps%20&%20GitOps%20Project/Screenshot_from_2025-11-30_17-53-10.png)
+![sc2.png](sc2.png)
 
-![Screenshot from 2025-11-30 18-59-01.png](FlappyBird%20%E2%80%94%20DevSecOps%20&%20GitOps%20Project/Screenshot_from_2025-11-30_18-59-01.png)
+![sc3.png](sc3.png)
 
-![Screenshot from 2025-11-30 18-59-56.png](FlappyBird%20%E2%80%94%20DevSecOps%20&%20GitOps%20Project/Screenshot_from_2025-11-30_18-59-56.png)
+![sc4.png](sc4.png)
